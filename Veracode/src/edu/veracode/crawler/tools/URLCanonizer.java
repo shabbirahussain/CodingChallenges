@@ -36,10 +36,12 @@ public final class URLCanonizer {
 		
 		compiledURI = new URI(protocol, host, path, null);
 		compiledURI = compiledURI.normalize();
+		url         = compiledURI.toURL().toString().replaceAll("/../", "/");
 		
-		return compiledURI.toURL();
+		
+		return new URL(url);
 		
 		// shorten: /a/../b => /b => [^/]+\/[^\/]*../
 		//String backFilter     = "[^/]+/[^/]*(../)";
-	} 
+	}
 }

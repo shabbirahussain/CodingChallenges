@@ -24,11 +24,10 @@ public final class Executor{
 	public static void main(String[] args) throws Exception {
 		// Initalizing
 		URL seed = URLCanonizer.getCanonizedURL(SEED_URL);
-		
 		StorageClient client = new DefaultStorageClient(seed, MAX_URLS);
 		
 		for(Short i=0;i<MAX_NO_THREADS; i++){
-			(new WebCrawler(client)).start();
+			(new WebCrawler(client, System.out)).start();
 		}
 	}
 }

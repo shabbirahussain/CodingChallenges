@@ -3,13 +3,13 @@ package edu.veracode.crawler.processes;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Date;
 
 import static edu.veracode.crawler.Constants.DEQUEUE_SIZE;
-
-import org.jsoup.Jsoup;
-import org.jsoup.Connection.Response;
 
 import edu.veracode.crawler.storageclient.StorageClient;
 import edu.veracode.crawler.tools.WebPageParser;
@@ -19,19 +19,19 @@ public class WebCrawler extends Thread {
 	private static final Boolean DEBUG_INFO = false;
 	private static final Boolean DEBUG_ERR  = true;
 	
-	private static WebPageParser     _webPageParser;
+	private static WebPageParser     _webPageParser = new WebPageParser();;
 	private StorageClient      		 storageClient;
+	private PrintStream				 out;
 	
-	static{
-		_webPageParser    = new WebPageParser();
-	}
 	
 	/**
 	 * Default constructor which initialized the thread
 	 * @param storageClient is the storage client to use
+	 * @param out is the print stream to which results has to printed
 	 */
-	public WebCrawler(StorageClient elasticClient) {
+	public WebCrawler(StorageClient elasticClient, PrintStream out) {
 		this.storageClient  = elasticClient;
+		this.out = out;
 	}
 
 	@Override
@@ -59,27 +59,60 @@ public class WebCrawler extends Thread {
 	 * Executes iteration
 	 * @param url is the url to crawl
 	 */
-	private void crawl(URL url){
+	public void crawl(URL url){
 		try{
 			this.log("Loading [" + url + "]");
-			Response response = Jsoup.connect(url.toString())
-					.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.120 Safari/535.2")
-					.followRedirects(true)
-					.timeout(5000)
-					.ignoreHttpErrors(true)
-					.execute();
+			String response = getPage(url);
 		
 			this.log("Parsing [" + url + "]");
-			ParsedWebPage parsedWebPage = _webPageParser.parseResponse(response);
+			ParsedWebPage parsedWebPage = _webPageParser.parseResponse(url, response);
 		
 			for(URL link : parsedWebPage.outLinks){
 				if(storageClient.enqueue(link))
-					System.out.println(link.toString());
+					out.println(link.toString());
 			}
 		}catch(Exception e){
-			this.err("Can't parse the page [" + url + "]");
+			out.print("Can't parse the page [" + url + "]");
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Opens the connection to fetch content from page
+	 * @param url is the URL to fetch from
+	 * @return String content from that website
+	 * @throws IOException 
+	 */
+	private String getPage(URL url) throws IOException{
+		HttpURLConnection conn = null;
+		
+		String location;
+	    for(int i=0; i<5; i++){
+	    	conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+			conn.setConnectTimeout(15000);
+		    conn.setReadTimeout(15000);
+		    conn.setInstanceFollowRedirects(true); 
+		    
+		    switch (conn.getResponseCode()){
+		        case HttpURLConnection.HTTP_MOVED_PERM:
+		        case HttpURLConnection.HTTP_MOVED_TEMP:
+		        case HttpURLConnection.HTTP_SEE_OTHER:
+		           location = conn.getHeaderField("Location"); 
+		           url = new URL(url, location);  // Deal with relative URLs
+		           try {Thread.sleep(1000);}catch (InterruptedException e) {}
+		           continue;
+		    }
+	    	break;
+	    }
+	    BufferedReader r = new BufferedReader(new InputStreamReader(conn.getInputStream(), Charset.forName("UTF-8")));
+
+	    StringBuilder sb = new StringBuilder();
+	    String line;
+	    while ((line = r.readLine()) != null) {
+	        sb.append(line);
+	    }
+	    return sb.toString();
 	}
 	
 	/**

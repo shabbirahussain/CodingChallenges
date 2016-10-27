@@ -10,6 +10,7 @@ import java.nio.charset.Charset;
 import java.util.Date;
 
 import static edu.veracode.crawler.Constants.DEQUEUE_SIZE;
+import static edu.veracode.crawler.Constants.SUPPRESS_ERR;
 
 import edu.veracode.crawler.storageclient.StorageClient;
 import edu.veracode.crawler.tools.WebPageParser;
@@ -73,7 +74,7 @@ public class WebCrawler extends Thread {
 			}
 		}catch(Exception e){
 			out.print("Can't parse the page [" + url + "]");
-			e.printStackTrace();
+			if(!SUPPRESS_ERR) e.printStackTrace();
 		}
 	}
 	

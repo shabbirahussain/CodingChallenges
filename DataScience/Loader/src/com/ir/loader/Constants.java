@@ -15,5 +15,5 @@ public final class Constants {
 	public static final String  CLUSTER_NAME = "dead-pool";
 
 	
-	public static final Boolean ENABLE_BULK_INSERT = true;
+	public static final Boolean ENABLE_BULK_INSERT = false;
 }

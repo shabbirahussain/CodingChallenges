@@ -1,3 +1,205 @@
+#
+DELETE ds_dataset
+
+PUT /ds_dataset/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "filter":{
+         "my_synonym":{
+            "type": "synonym",
+            "format": "wordnet",
+            "synonyms_path": "analysis/wn_s.pl",
+            "ignore_case" : false,
+            "expand" : false
+        },
+        "my_skipgram_filter":{
+          "type": "nGram",
+          "min_gram" : "2",
+          "max_gram" : "4",
+          "token_chars": [ "letter", "digit" ]
+        },
+        "my_shingle_filter": {
+          "type":             "shingle",
+          "min_shingle_size": 2,
+          "max_shingle_size": 2,
+          "output_unigrams":  false
+        }
+      },
+      "analyzer": {
+        "my_english": {
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "my_synonym",
+            "lowercase",
+            "stop"
+          ],
+          "stopwords_path": "analysis/stoplist.txt"
+        },
+        "my_shingle_analyzer": {
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop",
+            "my_shingle_filter"
+          ],
+          "stopwords_path": "analysis/stoplist.txt"
+        },
+        "my_skipgram_analyzer":{
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop",
+            "my_skipgram_filter"
+          ],
+          "stopwords_path": "analysis/stoplist.txt"
+        }
+      }
+    }
+  }
+}
+
+PUT /ds_dataset/train/_mapping
+{
+  "train": {
+    "properties": {
+      "webPublicationDate":{
+        "type" : "date",
+        "format": "dd-MM-yyyy",
+        "store": true
+      },
+      "topics":{
+        "type": "keyword",
+        "store": true
+      },
+      "bodyText": {
+        "type": "text",
+        "store": true,
+        "index": true,
+        "term_vector": "yes",
+        "analyzer": "my_english",
+        "fields":{
+          "Shingles":{
+            "type": "text",
+            "store": false,
+            "index": true,
+            "term_vector": "yes",
+            "analyzer": "my_shingle_analyzer"
+          },
+          "Skipgrams":{
+            "type": "text",
+            "store": false,
+            "index": true,
+            "term_vector": "yes",
+            "analyzer": "my_skipgram_analyzer"
+          }
+        }
+      }
+    }
+  }
+}
+
+DELETE /ds_dataset/train/shab
+POST /ds_dataset/train/shab
+{
+  "bodyText":"god idol immortal paragon"
+}
+GET /ds_dataset/train/shab/_termvectors
+{
+  "fields" : ["bodyText"],
+  "term_statistics" : false,
+  "field_statistics" : false
+}
+
+# ========================
+DELETE /test/
+PUT /test/
+{
+  "settings": {
+       "analysis": {
+           "filter": {
+               "custom_synonyms": {
+                   "type": "synonym",
+                   "expand": true,
+                   "synonyms": [
+                       "keepw, god, States, king"
+                   ]
+               },
+               "custom_ngram": {
+                   "type": "ngram",
+                   "min_gram": "4",
+                   "max_gram": "4"
+               }
+           },
+           "analyzer": {
+               "ngram_synonym_analyzer": {
+                   "type": "custom",
+                   "filter": [
+                       "custom_synonyms",
+                       "lowercase"
+                   ],
+                   "tokenizer": "standard"
+               }
+           }
+       }
+   },
+   "mappings": {
+       "doc": {
+           "properties": {
+               "text_field": {
+                   "type": "text",
+                   "term_vector": "yes",
+                   "analyzer": "ngram_synonym_analyzer"
+               }
+           }
+       }
+   }
+}
+PUT /test/doc/1
+{
+   "text_field": "god"
+}
+GET /test/doc/1/_termvectors
+
+GET /ds_dataset/train/1999a_TrainingData_06911
+GET /ds_dataset/train/1999a_TrainingData_06911/_termvectors?fields=bodyText.Skipgrams
+
+
+GET /ds_dataset/_analyze
+{
+  "field": "bodyText",
+  "text": "god"
+}
+
+POST /ds_dataset/train/shab
+{
+  "bodyText":"god idol"
+}
+GET /ds_dataset/train/shab/_termvectors
+{
+  "fields" : ["bodyText"],
+  "term_statistics" : false,
+  "field_statistics" : false
+}
+
+GET /ds_dataset/train/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+
 #DELETE ds_dataset
 
 PUT /ds_dataset/

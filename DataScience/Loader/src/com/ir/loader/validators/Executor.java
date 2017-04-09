@@ -1,16 +1,18 @@
-package com.ir.loader;
+package com.ir.loader.validators;
 
-import com.ir.loader.elasticclient.*;
-import com.ir.loader.parsers.*;
-import static com.ir.loader.Constants.*;
-
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
+import com.ir.loader.elasticclient.ElasticClient;
+import com.ir.loader.elasticclient.ElasticClientFactory;
+import com.ir.loader.parsers.JSONParser;
+import com.ir.loader.parsers.Parser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
-
 import java.io.File;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import static com.ir.loader.Constants.DATA_FILE_PATH;
 
 /**
  * @author shabbirhussain
@@ -20,51 +22,44 @@ public final class Executor {
 	public static void main(String[] args){
 		long start = System.nanoTime();
         //LogManager.getRootLogger();
-        System.out.println("Starting load...");
+        System.out.println("Starting validation...");
 
 		ElasticClient elasticClient = ElasticClientFactory.getElasticClient();
         Parser parser = new JSONParser();
 		
 		try {
 			
-			System.out.println("\n\nLoading Data...");
-            long cnt = startLoad(DATA_FILE_PATH, elasticClient, parser);
-			
-			System.out.println("Num of records inserted=" + cnt);
-			System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+			System.out.println("\n\nLoading Document list from ES...");
+            Set<String> docs = new HashSet<>(elasticClient.getDocumentList());
+            System.out.println("Total Docs loaded =" + docs.size());
+            validate(DATA_FILE_PATH, docs, parser);
+
+            System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		} catch (Exception e) {e.printStackTrace();}
 	}
 
     /**
      * Loads files to ElasticSearch
      * @param dataFilePath the path of data files folder
-     * @param elasticClient is the elasticsearch client
+     * @param docList is the list of documents in ES
      * @param parser is the parser to be used on the file
      * @return
      * @throws Exception
      */
-    private static Long startLoad(String dataFilePath, ElasticClient elasticClient, Parser parser) throws Exception {
+    private static void validate(String dataFilePath, Set<String> docList, Parser parser) throws Exception {
         File folder = new File(dataFilePath);
         File[] listOfFiles = folder.listFiles();
 
-        long cnt = 0;
         for (File file : listOfFiles) {
             if(!file.getName().endsWith(".json")) continue;
             System.out.print("[Info]: Loading file [" + file.getName() + "]");
 
             Map<String, XContentBuilder> docs = parser.parseFile(file.toPath());
-            System.out.print("[parsed]");
-            long fileCnt = 0;
+            System.out.println("[parsed]");
             for(Map.Entry<String, XContentBuilder> e: docs.entrySet()){
-                elasticClient.loadData(e.getKey(), e.getValue());
-                fileCnt++;
-                //break;
+                if(!docList.contains(e.getKey()))
+                    System.out.println("\t"+e.getKey());
             }
-            System.out.println("="+fileCnt);
-            cnt +=fileCnt;
-            //break;
         }
-        elasticClient.commit();
-        return cnt;
     }
 }

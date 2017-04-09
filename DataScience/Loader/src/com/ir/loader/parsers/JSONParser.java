@@ -22,16 +22,26 @@ public class JSONParser implements Parser {
         String content = new String(Files.readAllBytes(file));
         JSONObject jFile = new JSONObject(content);
 
-        jFile = jFile.getJSONObject("TrainingData");
+        boolean isTest = true;
+        if(jFile.has("TrainingData")){
+            jFile = jFile.getJSONObject("TrainingData");
+            isTest = false;
+        }else{
+            jFile = jFile.getJSONObject("TestData");
+            isTest = true;
+        }
+
         int i=0;
         for(String key: jFile.keySet()) {
             JSONObject jObj = jFile.getJSONObject(key);
             //System.out.println((i++) + jObj.toString());
             XContentBuilder builder = jsonBuilder()
                     .startObject()
+                    .field("docNo", key)
                     .field("webPublicationDate" 	, jObj.get("webPublicationDate"))
                     .field("topics"				, jObj.get("topics"))
                     .field("bodyText"				, jObj.get("bodyText"))
+                    .field("isTest"               , isTest)
                     .endObject();
             result.put(key, builder);
         }

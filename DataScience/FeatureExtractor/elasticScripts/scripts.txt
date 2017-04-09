@@ -1,0 +1,176 @@
+# ===========================================================
+#                    Spam Dataset
+# ===========================================================
+
+GET trec07_spam/document/inmail.10904
+GET trec07_spam/document/inmail.19436
+GET trec07_spam/document/inmail.21151
+
+GET trec07_spam/document/inmail.32775
+GET trec07_spam/document/inmail.1085
+GET trec07_spam/document/_search
+
+GET trec07_spam/document/inmail.1/_termvectors?fields=Content.Shingles
+
+GET trec07_spam/_analyze
+{
+  "analyzer": "my_skipgram_analyzer",
+  "text" : "no credit check required"
+}
+
+GET trec07_spam/document/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "is credit",
+      "fields": ["Content", "Content.Shingles"]
+    }
+  }
+}
+
+
+DELETE trec07_spam
+PUT /trec07_spam/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "filter":{
+        "my_skipgram_filter":{
+          "type": "nGram",
+          "min_gram" : "2",
+          "max_gram" : "4",
+          "token_chars": [ "letter", "digit" ]
+        },
+        "my_shingle_filter": {
+          "type":             "shingle",
+          "min_shingle_size": 2, 
+          "max_shingle_size": 2, 
+          "output_unigrams":  false   
+        },
+        "my_email_filter" : {
+          "type" : "pattern_capture",
+          "preserve_original" : 1,
+          "patterns" : [
+            "([^@]+)",
+            "(\\p{L}+)",
+            "(\\d+)",
+            "@(.+)"
+           ]
+        }
+      },
+      "analyzer": {
+        "my_english": { 
+          "type": "english",
+          "filter": [
+            "lowercase"
+          ],
+          "stopwords_path": "stoplist.txt" 
+        },
+        "my_shingle_analyzer": {
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop",
+            "porter_stem",
+            "my_shingle_filter"
+          ],
+          "stopwords_path": "stoplist.txt" 
+        },
+        "my_skipgram_analyzer":{
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop",
+            "porter_stem",
+            "my_skipgram_filter"
+          ],
+          "stopwords_path": "stoplist.txt" 
+        },
+        "my_email":{
+          "tokenizer" : "uax_url_email",
+          "filter" : [ 
+            "my_email_filter", "lowercase",  "unique" 
+          ]
+        }
+      }
+    }
+  }
+}
+
+
+PUT /trec07_spam/document/_mapping
+{
+  "document": {
+    "properties": {
+      "From":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "To":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "Cc":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "ReplyTo":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "MultiPart":{
+        "type": "boolean",
+        "store": true
+      },
+      "Subject": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_english"
+      },
+      "Content": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_english",
+        "fields":{
+          "Shingles":{
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "my_shingle_analyzer"
+          },
+          "Skipgrams":{
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "my_skipgram_analyzer"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+PUT trec07_spam/document/inmail.1
+{
+  "Content": "branded the quality "
+}

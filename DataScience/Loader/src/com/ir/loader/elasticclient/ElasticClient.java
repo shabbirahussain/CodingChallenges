@@ -7,6 +7,8 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
+import java.util.List;
+
 
 /**
  * @author shabbirhussain
@@ -33,6 +35,12 @@ public interface ElasticClient {
 	 * @param client
 	 * @param bulkProcessor		 
 	 */
-	ElasticClient attachClients(Client client, BulkProcessor bulkProcessor);
-		
+	ElasticClient attachTransportClients(Client client, BulkProcessor bulkProcessor);
+
+
+	/**
+	 * Gets the document list from elastic search
+	 * @return List of string containing document ids from elasticsearch
+	 */
+	List<String> getDocumentList();
 }

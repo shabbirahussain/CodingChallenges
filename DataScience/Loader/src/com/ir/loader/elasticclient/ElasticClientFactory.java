@@ -18,20 +18,6 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 public class ElasticClientFactory {
-	/** 
-	 * @return ElasticClientFactory
-	 */
-	public static Settings getSettings(){
-        Settings result = Settings.builder()
-                .put("client.transport.sniff", true)
-				.put("cluster.name", Constants.CLUSTER_NAME)
-                .build();
-		return result;
-	}
-
-	
-	// ------------------------ Builder -------------------------------
-	
 	/**
 	 * Builds a new client from information provided so far
 	 * @return ElasticClient
@@ -39,8 +25,13 @@ public class ElasticClientFactory {
 	public static ElasticClient getElasticClient(){
 		ElasticClient elasticClient = new BaseElasticClient(Constants.INDEX_NAME, Constants.INDEX_TYPE, Constants.ENABLE_BULK_INSERT);
         try {
+            Settings settings = Settings.builder()
+                    .put("client.transport.sniff", true)
+                    .put("cluster.name", Constants.CLUSTER_NAME)
+                    .build();
 
-            Client client = new PreBuiltTransportClient(getSettings())
+
+            Client client = new PreBuiltTransportClient(settings)
                     .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(Constants.HOST), Constants.PORT));
 
             BulkProcessor bulkProcessor = BulkProcessor.builder(
@@ -68,7 +59,7 @@ public class ElasticClientFactory {
                             BackoffPolicy.exponentialBackoff(TimeValue.timeValueMillis(100), 3))
                     .build();
 
-            elasticClient.attachClients(client, bulkProcessor);
+            elasticClient.attachTransportClients(client, bulkProcessor);
         }catch (UnknownHostException e) {e.printStackTrace();}
 
         return elasticClient;

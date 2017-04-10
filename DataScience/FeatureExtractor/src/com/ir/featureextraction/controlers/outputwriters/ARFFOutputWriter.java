@@ -11,6 +11,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -33,10 +36,13 @@ public class ARFFOutputWriter extends AbstractOutputWriter {
 	 * @param outFile is the output file for the writer
 	 * @throws IOException
 	 */
-	public ARFFOutputWriter(String outFile, FeatureModel featureModel) throws IOException {
+	public ARFFOutputWriter(String outFile, FeatureModel featureModel, String tempPath) throws IOException {
 		super(outFile, MY_EXTENSION);
 
-        this.tempFile = File.createTempFile(this.getClass().getName(), ".tmp");
+		Path dir = Paths.get(tempPath); dir.toFile().mkdirs();
+        this.tempFile = Files.createTempFile(dir, this.getClass().getName(), ".tmp")
+                .toFile();
+        this.tempFile.deleteOnExit();
 		this.tempOut = new PrintStream(tempFile);
 
         this.featureModel = featureModel;
@@ -69,7 +75,7 @@ public class ARFFOutputWriter extends AbstractOutputWriter {
 
             int cnt = 1;
             for (Entry<Integer, Double> e : sortedMap.entrySet()) {
-                String val = String.format("%3.2f" ,  e.getValue()) ;
+                String val = String.format("%1.0f" ,  e.getValue()) ;
                 tempOut.print(e.getKey() + " " + val);
                 if ((cnt++) != sortedMap.size()) tempOut.print(", ");
             }

@@ -71,11 +71,11 @@ public class ARFFOutputWriter extends AbstractOutputWriter {
             // Assign a junk default label if no label is provided
             if (!this.featureModel.labelSet.contains(label)) label = JUNK_LABEL;
 
-            tempOut.print(LABEL_INDEX + " " + label + ", ");
+            tempOut.print(LABEL_INDEX + " " + super.convertToString(label) + ", ");
 
             int cnt = 1;
             for (Entry<Integer, Double> e : sortedMap.entrySet()) {
-                String val = String.format("%1.0f" ,  e.getValue()) ;
+                String val = super.convertToString(e.getValue()) ;
                 tempOut.print(e.getKey() + " " + val);
                 if ((cnt++) != sortedMap.size()) tempOut.print(", ");
             }
@@ -108,7 +108,7 @@ public class ARFFOutputWriter extends AbstractOutputWriter {
 		out.print("{");{
             int cnt = 1;
             for (Double l : this.featureModel.labelSet) {
-                out.print(l);
+                out.print(super.convertToString(l));
                 if ((cnt++) != this.featureModel.labelSet.size()) out.print(", ");
             }
         }out.println("}");

@@ -45,4 +45,13 @@ abstract class AbstractOutputWriter implements OutputWriter {
 		System.out.println("\t" + format.format(doneCount/rowCount));
 		this.time = System.currentTimeMillis();
 	}
+
+    /**
+     * Converts double feature value to string value to print. This could lead to precision loss depending on configuration.
+     * @param value is the of feature
+     * @return String equivalent of given feature value
+     */
+    protected String convertToString(Double value){
+        return String.format("%1.0f", value);
+    }
 }

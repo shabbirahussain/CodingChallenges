@@ -82,6 +82,14 @@ PUT /ds_dataset/train/_mapping
         "type": "keyword",
         "store": true
       },
+      "docNo":{
+        "type": "text",
+        "store": true
+      },
+      "isTest":{
+        "type":"boolean",
+        "store":true
+      },
       "bodyText": {
         "type": "text",
         "store": true,
@@ -108,6 +116,7 @@ PUT /ds_dataset/train/_mapping
     }
   }
 }
+
 
 DELETE /ds_dataset/train/shab
 POST /ds_dataset/train/shab

@@ -1,7 +1,5 @@
 package com.ir.featureextraction.elasticclient;
 
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequest;
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.termvectors.TermVectorsRequest;
 import org.elasticsearch.action.termvectors.TermVectorsResponse;
@@ -11,9 +9,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -143,7 +139,7 @@ public class BaseElasticClient implements ElasticClient, Serializable{
             response = _client.prepareSearchScroll(response.getScrollId())
                     .setScroll(scrollTimeValue)
                     .get();
-            //break;
+            break;
         }
         return result;
     }

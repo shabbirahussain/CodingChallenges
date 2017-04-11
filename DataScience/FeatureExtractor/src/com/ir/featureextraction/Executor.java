@@ -164,9 +164,16 @@ public final class Executor {
         while((line = br.readLine())!=null){
             result.add(line.trim());
         }
+        br.close();
         return result;
     }
 
+    /**
+     * Writes the list of documents to a file
+     * @param docs is the list of documents to write
+     * @param filePath is the full string path of document file to write
+     * @throws FileNotFoundException
+     */
     private static void writeDocumentList(Collection<String> docs, String filePath) throws FileNotFoundException {
 	    PrintStream out = new PrintStream(new FileOutputStream(filePath));
 	    for(String doc:docs){
@@ -174,4 +181,23 @@ public final class Executor {
         }
 	    out.close();
     }
+
+    /**
+     * Reads the list of documents from file
+     * @param filePath is the full file path of douments file to read
+     * @return list of documents form the given file
+     * @throws IOException
+     */
+    private static Collection<String> readDocumentList( String filePath) throws IOException {
+        List<String> result = new LinkedList<>();
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
+        String line;
+        while((line=br.readLine())!=null){
+            result.add(line);
+        }
+        br.close();
+        return result;
+    }
+
+
 }

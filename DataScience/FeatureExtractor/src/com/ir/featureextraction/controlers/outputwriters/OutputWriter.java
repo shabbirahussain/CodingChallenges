@@ -10,7 +10,7 @@ public interface OutputWriter {
 	 * @param label is the value of label to print
 	 * @param featureMap is the map containing feature values
 	 */
-	void printResults(Double label, Map<String, Double> featureMap);
+	void printResults(Double label, Map<String, Double> featureMap) throws IOException;
 	
 	/**
 	 * Closes the writer

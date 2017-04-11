@@ -1,14 +1,10 @@
 package com.ir.featureextraction.controlers.extractors;
 
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.featureextraction.elasticclient.ElasticClient;
-import org.elasticsearch.client.transport.TransportClient;
 
 import com.ir.featureextraction.models.MFeature;
 

@@ -4,7 +4,6 @@ import com.ir.featureextraction.elasticclient.ElasticClient;
 import com.ir.featureextraction.models.MFeature;
 
 import java.net.UnknownHostException;
-import java.util.List;
 
 public class IsTestFeatureExtractor extends AbstractFeatureExtractor {
 	private static final long serialVersionUID = 1L;

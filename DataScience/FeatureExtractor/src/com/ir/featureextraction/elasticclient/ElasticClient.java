@@ -1,8 +1,6 @@
 package com.ir.featureextraction.elasticclient;
 
-import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.List;

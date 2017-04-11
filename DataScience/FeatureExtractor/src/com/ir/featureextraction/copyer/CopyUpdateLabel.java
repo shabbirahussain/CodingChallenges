@@ -2,18 +2,17 @@ package com.ir.featureextraction.copyer;
 
 import com.ir.featureextraction.Constants;
 import com.ir.featureextraction.controlers.extractors.*;
-import com.ir.featureextraction.controlers.outputwriters.ARFFOutputWriter;
 import com.ir.featureextraction.controlers.outputwriters.FeatureModel;
 import com.ir.featureextraction.controlers.outputwriters.OutputWriter;
-import com.ir.featureextraction.controlers.outputwriters.UpdateLabelOutputWriter;
 import com.ir.featureextraction.elasticclient.ElasticClient;
 import com.ir.featureextraction.elasticclient.ElasticClientFactory;
 import com.ir.featureextraction.models.MFeature;
 
 import java.io.*;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author shabbirhussain
@@ -26,11 +25,11 @@ public final class CopyUpdateLabel implements Runnable{
 	private static List<String>  _docList;
 
 	private FeatureExtractor labelExtractor;
-    private List<OutputWriter> outs;
+    private UpdateLabelOutputWriter out;
 
-	public CopyUpdateLabel(FeatureExtractor labelExtractor, List<OutputWriter> outs) {
+	public CopyUpdateLabel(FeatureExtractor labelExtractor, UpdateLabelOutputWriter out) {
         this.labelExtractor = labelExtractor;
-        this.outs = outs;
+        this.out = out;
     }
 	
 	/**
@@ -44,20 +43,18 @@ public final class CopyUpdateLabel implements Runnable{
 
        ////////// Create label feature extractors //////////////////
         FeatureModel  featureModel = new FeatureModel();
-        List<OutputWriter> allOutputWriters = new LinkedList<>();
 
         for(String topic : topics) {
             FeatureExtractor labelExtractor = new ContainsTagFeatureExtractor(client, LABEL_FIELD_NAME, topic);
 
             ///////// Create output writers  /////////////////////
-            List<OutputWriter> outs = new LinkedList<>();
+            List<UpdateLabelOutputWriter> outs = new LinkedList<>();
 
             String inFileName = Constants.FEAT_FILE_PATH + "activism/activism_train.arff";
             String featFileName = Constants.FEAT_FILE_PATH + topic +  "/" + topic;
-            outs.add(new UpdateLabelOutputWriter(inFileName ,featFileName + "_train"));
+            UpdateLabelOutputWriter out = new UpdateLabelOutputWriter(inFileName ,featFileName + "_train");
 
-            labelExtractors.add(new CopyUpdateLabel(labelExtractor, outs));
-            allOutputWriters.addAll(outs);
+            labelExtractors.add(new CopyUpdateLabel(labelExtractor, out));
         }
 		//////////////////////////////////////////////////////
 
@@ -69,13 +66,13 @@ public final class CopyUpdateLabel implements Runnable{
         _docList = readDocumentList(Constants.DOC_LIST_FILE + "_train.csv");
         System.out.println("[Took = " + ((System.nanoTime() - start) * 1.0e-9) + "]");
 
-        System.out.println("Extracting Features...");
+        System.out.println("Copying documents...");
+        ExecutorService executor = Executors.newFixedThreadPool(Constants.NUM_THREADS);
         for(CopyUpdateLabel et: labelExtractors){
-            (new Thread(et)).start();
+            Runnable worker = et;
+            executor.execute(worker);
         }
-
-
-
+        executor.shutdown();
         System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
 
@@ -84,36 +81,26 @@ public final class CopyUpdateLabel implements Runnable{
 	public void run() {
         Long time = System.currentTimeMillis();
         Double cnt = 0.0;
-        MFeature combinedFeatures = new MFeature();
 
-        for (String docID : _docList) {
-
-            if ((System.currentTimeMillis() - time) > Math.pow(10, 4)) {
-                time = System.currentTimeMillis();
-                System.out.println("[Info]\t" + _percentFormat.format(cnt / _docList.size()) + " docs done" + "[" + cnt + "]");
-            }
-
-            // Extract label and write to appropriate stream
-            Double label = labelExtractor.getFeatures(docID).get("#VALUE");
-
-            try{
-                for (OutputWriter out : outs){
-                    out.printResults(label, combinedFeatures);
+        try{
+            out.copyHeaders();
+            for (String docID : _docList) {
+                if ((System.currentTimeMillis() - time) > Math.pow(10, 4)) {
+                    time = System.currentTimeMillis();
+                    System.out.println("[Info]\t Thread~" + Thread.currentThread().getId() + ":" + _percentFormat.format(cnt / _docList.size()) + " docs done" + "[" + cnt + "]");
                 }
-            }catch(Exception err){
-                System.err.println(err);
+
+                // Extract label and write to appropriate stream
+                Double label = labelExtractor.getFeatures(docID).get("#VALUE");
+                out.printResults(label);
+                cnt++;
             }
 
-            cnt++;
-        }
+            System.out.println("Writing final features...");
+            out.close();
 
-        System.out.println("Writing final features...");
-        for (OutputWriter out : outs) {
-            try{
-                out.close();
-            }catch (Exception e){
-                System.err.println(e);
-            }
+        }catch (Exception e){
+            System.err.println(e);
         }
 	}
 

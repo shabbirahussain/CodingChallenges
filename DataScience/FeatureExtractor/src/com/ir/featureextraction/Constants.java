@@ -17,5 +17,6 @@ public final class Constants{
 	public static final Integer PORT = 9300;
 	public static final String  CLUSTER_NAME = "dead-pool";
 
+	public static final Integer NUM_THREADS = 10;
  	public static final String[] MANUAL_FEAT_LIST = {};
 }

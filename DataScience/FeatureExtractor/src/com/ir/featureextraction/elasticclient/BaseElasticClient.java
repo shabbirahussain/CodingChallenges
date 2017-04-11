@@ -139,7 +139,7 @@ public class BaseElasticClient implements ElasticClient, Serializable{
             response = _client.prepareSearchScroll(response.getScrollId())
                     .setScroll(scrollTimeValue)
                     .get();
-            break;
+            //break;
         }
         return result;
     }

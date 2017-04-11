@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 
 import com.ir.featureextraction.elasticclient.ElasticClient;
 
-import com.ir.featureextraction.models.MFeature;
+import com.ir.featureextraction.models.MFeatureValueRow;
 
 public class NGramFeatureExtractor extends AbstractFeatureExtractor {
 	private static final long serialVersionUID = 1L;
@@ -26,7 +26,7 @@ public class NGramFeatureExtractor extends AbstractFeatureExtractor {
 
 
 	@Override
-	public MFeature getFeatures(String docID) {
+	public MFeatureValueRow getFeatures(String docID) {
 		return getFeaturesFromTermVec(docID);
 	}
 	
@@ -35,8 +35,8 @@ public class NGramFeatureExtractor extends AbstractFeatureExtractor {
 	 * @param docID is the document id to use
 	 * @return Map of features and values
 	 */
-	private MFeature getFeaturesFromTermVec(String docID) {
-		MFeature result = new MFeature();
+	private MFeatureValueRow getFeaturesFromTermVec(String docID) {
+		MFeatureValueRow result = new MFeatureValueRow();
 		try{
 			Map<String, Double> tfMap;
 			tfMap = super.client.getTermFrequency(docID, textFieldName);

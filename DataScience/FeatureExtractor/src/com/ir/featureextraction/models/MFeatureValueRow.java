@@ -3,7 +3,7 @@ package com.ir.featureextraction.models;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MFeature extends HashMap<String, Double> {
+public class MFeatureValueRow extends HashMap<String, Double> {
 	private static final long serialVersionUID = 1L;
 
 	@Override

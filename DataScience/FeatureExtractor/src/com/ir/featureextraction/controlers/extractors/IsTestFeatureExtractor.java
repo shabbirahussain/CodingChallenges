@@ -1,7 +1,7 @@
 package com.ir.featureextraction.controlers.extractors;
 
 import com.ir.featureextraction.elasticclient.ElasticClient;
-import com.ir.featureextraction.models.MFeature;
+import com.ir.featureextraction.models.MFeatureValueRow;
 
 import java.net.UnknownHostException;
 
@@ -20,8 +20,8 @@ public class IsTestFeatureExtractor extends AbstractFeatureExtractor {
 	
 
 	@Override
-	public MFeature getFeatures(String docID) {
-		MFeature result = new MFeature();
+	public MFeatureValueRow getFeatures(String docID) {
+		MFeatureValueRow result = new MFeatureValueRow();
         result.put("#VALUE", 0.0);
 
 		Object val = null;

@@ -2,7 +2,7 @@ package com.ir.featureextraction.controlers.extractors;
 
 import java.io.Serializable;
 
-import com.ir.featureextraction.models.MFeature;
+import com.ir.featureextraction.models.MFeatureValueRow;
 
 public interface FeatureExtractor extends Serializable{
 
@@ -11,5 +11,5 @@ public interface FeatureExtractor extends Serializable{
 	 * @param docID is the given 
 	 * @return Map of features and values
 	 */
-	MFeature getFeatures(String docID);
+	MFeatureValueRow getFeatures(String docID);
 }

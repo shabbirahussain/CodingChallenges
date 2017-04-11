@@ -3,152 +3,182 @@ package com.ir.featureextraction;
 import java.io.*;
 import java.text.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.ir.featureextraction.controlers.extractors.*;
 import com.ir.featureextraction.controlers.outputwriters.ARFFOutputWriter;
-import com.ir.featureextraction.controlers.outputwriters.FeatureModel;
+import com.ir.featureextraction.controlers.outputwriters.ARFFOutputWriterBuffer;
+import com.ir.featureextraction.controlers.outputwriters.MFeatureKeyMap;
+import com.ir.featureextraction.copyer.CopyUpdateLabel;
 import com.ir.featureextraction.elasticclient.ElasticClient;
 import com.ir.featureextraction.elasticclient.ElasticClientFactory;
 
-import com.ir.featureextraction.controlers.outputwriters.OutputWriter;
-import com.ir.featureextraction.models.MFeature;
+import com.ir.featureextraction.models.MFeatureValueRow;
 
 /**
  * @author shabbirhussain
  *
  */
-class ExtractorWriterTupe{
-    FeatureExtractor labelExtractor;
-    List<OutputWriter> outTrain, outTest;
+class ExtractorWriterTuple implements Runnable {
+    private static final DecimalFormat _percentFormat = new DecimalFormat("##.00%");
 
-    public ExtractorWriterTupe(){
-        outTrain = new LinkedList<>();
-        outTest  = new LinkedList<>();
-    }
+    List<FeatureExtractor> featureExtractors;
+    FeatureExtractor labelExtractor, isTestExtractor;
+    ARFFOutputWriterBuffer outTrain, outTest;
+    List<String> docList;
 
-    public ExtractorWriterTupe(FeatureExtractor labelExtractor, List<OutputWriter> outTrain, List<OutputWriter>outTest){
+    public ExtractorWriterTuple(
+            List<FeatureExtractor> featureExtractors,
+            FeatureExtractor labelExtractor,
+            FeatureExtractor isTestExtractor,
+            ARFFOutputWriterBuffer outTrain,
+            ARFFOutputWriterBuffer outTest,
+            List<String> docList){
+        this.featureExtractors = featureExtractors;
         this.labelExtractor = labelExtractor;
+        this.isTestExtractor = isTestExtractor;
         this.outTrain = outTrain;
         this.outTest  = outTest;
+        this.docList = docList;
+    }
+
+    @Override
+    public void run(){
+        Long time = System.currentTimeMillis();
+        Double cnt = 0.0;
+        for(String docID: this.docList){
+            if((System.currentTimeMillis() - time)>Math.pow(10, 4)){
+                time = System.currentTimeMillis();
+                System.out.println("[Info]\t[Thread=>" + Thread.currentThread().getId() + "]" + _percentFormat.format(cnt/docList.size()) + " docs done" + "[" + cnt + "]");
+            }
+
+            MFeatureValueRow combinedFeatures = new MFeatureValueRow();
+            for(FeatureExtractor e: this.featureExtractors)
+                combinedFeatures.putAll(e.getFeatures(docID));
+
+            // Check if document is test or train
+            Double isTestVal  = this.isTestExtractor.getFeatures(docID).get("#VALUE");
+
+            // Extract label and write to appropriate stream
+            Double label = this.labelExtractor.getFeatures(docID).get("#VALUE");
+            ARFFOutputWriterBuffer buffer;
+            if(isTestVal == 1.0){
+                buffer = this.outTest;
+            } else{
+                buffer = this.outTrain;
+            }
+            buffer.printResults(docID, label, combinedFeatures);
+            cnt++;
+        }
     }
 }
 
+
+
+
 public final class Executor {
-	private static final DecimalFormat _percentFormat = new DecimalFormat("##.00%");
 	private static final String LABEL_FIELD_NAME = "topics";
     private static final String IS_TEST_FIELD_NAME = "isTest";
 
-	private static List<FeatureExtractor> _featureExtractors;
-	private static FeatureExtractor _isTestExtractor;
-    private static List<ExtractorWriterTupe> _labelExtractors;
-
-	private static List<String>  _docList, _docsTest, _docsTrain;
-	
 	/**
 	 * @param args 
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception{
         ElasticClient client = ElasticClientFactory.getElasticClient();
-        _featureExtractors = new LinkedList<>();
-        _labelExtractors   = new LinkedList<>();
-        _docsTrain = new LinkedList<>();
-        _docsTest  = new LinkedList<>();
-        Collection<String> topics = getTopics(Constants.TOPIC_DICT_PATH);
-
-		////////// Create feature extractors //////////////////
-
-		_isTestExtractor = (new IsTestFeatureExtractor(client, IS_TEST_FIELD_NAME));
-
-        _featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("yyyy")));
-        _featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("mm")));
-        _featureExtractors.add(new NGramFeatureExtractor(client, "bodyText"));
-        _featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Shingles"));
-        _featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Skipgrams"));
-
-        ////////// Create label feature extractors //////////////////
-        FeatureModel  featureModel = new FeatureModel();
-        List<OutputWriter> allOutputWriters = new LinkedList<>();
-
-        for(String topic : topics) {
-            FeatureExtractor labelExtractor = new ContainsTagFeatureExtractor(client, LABEL_FIELD_NAME, topic);
-
-            ///////// Create output writers  /////////////////////
-            List<OutputWriter> outTrain = new LinkedList<>();
-            List<OutputWriter> outTest  = new LinkedList<>();
-
-            String featFileName = Constants.FEAT_FILE_PATH + topic +  "/" + topic;
-            outTrain.add(new ARFFOutputWriter(featFileName + "_train", featureModel, Constants.TEMP_PATH));
-            outTest. add(new ARFFOutputWriter(featFileName + "_test" , featureModel, Constants.TEMP_PATH));
-
-            _labelExtractors.add(new ExtractorWriterTupe(labelExtractor, outTrain, outTest));
-            allOutputWriters.addAll(outTrain);
-            allOutputWriters.addAll(outTest);
-        }
-		//////////////////////////////////////////////////////
-
+        String topic = "afganistan";
 
 
         long start = System.nanoTime();
-		// Read all documents
         System.out.print("Loading document list...");
-        _docList = client.getDocumentList();
+        List<String> docList = client.getDocumentList();
         System.out.println("[Took = " + ((System.nanoTime() - start) * 1.0e-9) + "]");
 
+
+        ////////// Create feature extractors //////////////////
+        List<FeatureExtractor> featureExtractors = new LinkedList<>();
+
+        featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("yyyy")));
+        featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("mm")));
+        featureExtractors.add(new NGramFeatureExtractor(client, "bodyText"));
+        featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Shingles"));
+        featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Skipgrams"));
+
+        ////////// Create label feature extractors //////////////////
+        FeatureExtractor labelExtractor = new ContainsTagFeatureExtractor(client, LABEL_FIELD_NAME, topic);
+
+        ////////// Create label feature extractors //////////////////
+        FeatureExtractor isTestExtractor = (new IsTestFeatureExtractor(client, IS_TEST_FIELD_NAME));
+
+
+        ///////// Create output writers  /////////////////////
+        String featFileName = Constants.FEAT_FILE_PATH + topic +  "/" + topic;
+        List<Thread> threads = new LinkedList<>();
+        List<ARFFOutputWriterBuffer> allOutTest  = new LinkedList<>();
+        List<ARFFOutputWriterBuffer> allOutTrain = new LinkedList<>();
+        MFeatureKeyMap mFeatureKeyMap = new MFeatureKeyMap();
+
+        List<List<String>> docLists = splitList(docList, Constants.NUM_THREADS);
+        for(int i=0; i<Constants.NUM_THREADS; i++){
+            ARFFOutputWriterBuffer bufTrain = new ARFFOutputWriterBuffer(i,"_train", Constants.TEMP_PATH, mFeatureKeyMap);
+            ARFFOutputWriterBuffer bufTest  = new ARFFOutputWriterBuffer(i,"_test" , Constants.TEMP_PATH, mFeatureKeyMap);
+
+            threads.add(new Thread(
+                    new ExtractorWriterTuple(featureExtractors,
+                            labelExtractor,
+                            isTestExtractor,
+                            bufTrain,
+                            bufTest,
+                            docLists.get(i)
+                    )));
+            allOutTrain.add(bufTrain);
+            allOutTest. add(bufTest);
+        }
+		//////////////////////////////////////////////////////
+
         System.out.println("Extracting Features...");
-		execute(_docList);
+        for(Thread thread: threads){
+            thread.start();
+        }
+        System.out.println("Waiting for joining...");
+        for(Thread thread: threads){
+            thread.join();
+        }
 
 		System.out.println("Writing final features...");
-		for(OutputWriter out : allOutputWriters)
-		    out.close();
+        ARFFOutputWriter outTrainWriter = new ARFFOutputWriter(featFileName + "_train", allOutTrain, mFeatureKeyMap);
+        ARFFOutputWriter outTestWriter  = new ARFFOutputWriter(featFileName + "_test",  allOutTest, mFeatureKeyMap);
 
-		System.out.println("Writing doc list");
-        writeDocumentList(_docsTrain, Constants.DOC_LIST_FILE + "_train.csv");
-        writeDocumentList(_docsTest,  Constants.DOC_LIST_FILE + "_test.csv");
+        outTrainWriter.close();
+        outTestWriter.close();
 
         System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
-	
-	/**
-	 * Executes the feature extraction for document list
-	 * @throws IOException 
-	 */
-	private static void execute(List<String> docList) throws IOException{
-		Long time = System.currentTimeMillis();
-		Double cnt = 0.0;
-		for(String docID: docList){
 
-			if((System.currentTimeMillis() - time)>Math.pow(10, 4)){
-				time = System.currentTimeMillis();
-				System.out.println("[Info]\t" + _percentFormat.format(cnt/docList.size()) + " docs done" + "[" + cnt + "]");
-			}
+    /**
+     * Splits the list into approx equal parts
+     * @param stringList is the list of strings to split
+     * @param numParts is the number of parts list needs to be split into
+     * @return
+     */
+	private static List<List<String>> splitList(List<String> stringList, int numParts){
+	    List<List<String>> result = new LinkedList<>();
+        double numElements = Math.round(stringList.size()/numParts);
 
-            MFeature combinedFeatures = new MFeature();
-			for(FeatureExtractor e: _featureExtractors)
-                combinedFeatures.putAll(e.getFeatures(docID));
-
-			// Check if document is test or train
-            Double isTestVal  = _isTestExtractor.getFeatures(docID).get("#VALUE");
-
-            // Extract label and write to appropriate stream
-            for(ExtractorWriterTupe et: _labelExtractors){
-                Double label = et.labelExtractor.getFeatures(docID).get("#VALUE");
-
-                List<OutputWriter> outs;
-                if(isTestVal == 0.0){
-                    outs = et.outTrain;
-                    _docsTrain.add(docID);
-                } else{
-                    outs = et.outTest;
-                    _docsTest.add(docID);
-                }
-
-                for(OutputWriter out : outs)
-                    out.printResults(label, combinedFeatures);
+        List<String> tempList = new LinkedList<>();
+        int i = 0;
+        while(!stringList.isEmpty()){
+            tempList.add(stringList.remove(0));
+            if(++i == numElements || stringList.isEmpty()){
+                i=0;
+                result.add(tempList);
+                tempList = new LinkedList<>();
             }
-			cnt++;
-		}
-	}
+        }
+        return result;
+    }
+
 
     /**
      * Reads the list of topics/labels to generate
@@ -181,23 +211,4 @@ public final class Executor {
         }
 	    out.close();
     }
-
-    /**
-     * Reads the list of documents from file
-     * @param filePath is the full file path of douments file to read
-     * @return list of documents form the given file
-     * @throws IOException
-     */
-    private static Collection<String> readDocumentList( String filePath) throws IOException {
-        List<String> result = new LinkedList<>();
-        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
-        String line;
-        while((line=br.readLine())!=null){
-            result.add(line);
-        }
-        br.close();
-        return result;
-    }
-
-
 }

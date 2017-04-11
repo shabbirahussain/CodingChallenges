@@ -2,11 +2,8 @@ package com.ir.featureextraction.copyer;
 
 import com.ir.featureextraction.Constants;
 import com.ir.featureextraction.controlers.extractors.*;
-import com.ir.featureextraction.controlers.outputwriters.FeatureModel;
-import com.ir.featureextraction.controlers.outputwriters.OutputWriter;
 import com.ir.featureextraction.elasticclient.ElasticClient;
 import com.ir.featureextraction.elasticclient.ElasticClientFactory;
-import com.ir.featureextraction.models.MFeature;
 
 import java.io.*;
 import java.text.DecimalFormat;
@@ -42,8 +39,6 @@ public final class CopyUpdateLabel implements Runnable{
         Collection<String> topics = getTopics(Constants.TOPIC_DICT_PATH);
 
        ////////// Create label feature extractors //////////////////
-        FeatureModel  featureModel = new FeatureModel();
-
         for(String topic : topics) {
             FeatureExtractor labelExtractor = new ContainsTagFeatureExtractor(client, LABEL_FIELD_NAME, topic);
 

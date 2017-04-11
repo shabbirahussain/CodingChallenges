@@ -1,7 +1,7 @@
 package com.ir.featureextraction.controlers.extractors;
 
 import com.ir.featureextraction.elasticclient.ElasticClient;
-import com.ir.featureextraction.models.MFeature;
+import com.ir.featureextraction.models.MFeatureValueRow;
 
 import java.net.UnknownHostException;
 import java.text.DateFormat;
@@ -25,9 +25,9 @@ public class DateFeatureExtractor extends AbstractFeatureExtractor {
 	
 
 	@Override
-	public MFeature getFeatures(String docID) {
+	public MFeatureValueRow getFeatures(String docID) {
         DateFormat df = new SimpleDateFormat("dd-mm-yyyy");
-		MFeature result = new MFeature();
+		MFeatureValueRow result = new MFeatureValueRow();
 		Object val = null;
         String featureName;
 		try{

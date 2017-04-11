@@ -1,88 +1,41 @@
 package com.ir.featureextraction.controlers.outputwriters;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
+import java.util.List;
 
-public class ARFFOutputWriter extends AbstractOutputWriter {
+public class ARFFOutputWriter {
 	private static final String MY_EXTENSION = ".arff";
-	private static final Integer LABEL_INDEX = 0;
-	private static Double JUNK_LABEL = 0.0;
-	
-	private File tempFile;
-	private PrintStream tempOut;
-	private FeatureModel featureModel;
+    private MFeatureKeyMap mFeatureKeyMap;
+	private File outFile;
+	private List<ARFFOutputWriterBuffer> arffBuffers;
+
 	
 	/**
 	 * Default constructor
-	 * @param outFile is the output file for the writer
+	 * @param outFileName is the output file for the writer
+     * @param arffBuffers is the ARFF buffers which collected data
 	 * @throws IOException
 	 */
-	public ARFFOutputWriter(String outFile, FeatureModel featureModel, String tempPath) throws IOException {
-		super(outFile, MY_EXTENSION);
-
-		Path dir = Paths.get(tempPath); dir.toFile().mkdirs();
-        this.tempFile = Files.createTempFile(dir, this.getClass().getName(), ".tmp")
-                .toFile();
-        this.tempFile.deleteOnExit();
-		this.tempOut = new PrintStream(tempFile);
-
-        this.featureModel = featureModel;
-		this.featureModel.featMap.put("LABEL", LABEL_INDEX);
-        System.out.println(tempFile);
-	}
-
-	@Override
-	public void printResults(Double label, Map<String, Double> featureMap) {
-		super.addRow();
-		this.featureModel.labelSet.add(label);
-		
-		TreeMap<Integer, Double> sortedMap = new TreeMap<>();
-		// Map features to keys
-		for(Entry<String, Double> e: featureMap.entrySet()){
-			String key = e.getKey();
-			Integer nKey = this.featureModel.featMap.get(e.getKey());
-			if(nKey == null){
-				nKey = this.featureModel.featMap.size();
-				this.featureModel.featMap.put(key, nKey);
-			}
-			sortedMap.put(nKey, e.getValue());
-		}
-		
-		tempOut.print("{");{
-            // Assign a junk default label if no label is provided
-            if (!this.featureModel.labelSet.contains(label)) label = JUNK_LABEL;
-
-            tempOut.print(LABEL_INDEX + " " + super.convertToString(label) + ", ");
-
-            int cnt = 1;
-            for (Entry<Integer, Double> e : sortedMap.entrySet()) {
-                String val = super.convertToString(e.getValue()) ;
-                tempOut.print(e.getKey() + " " + val);
-                if ((cnt++) != sortedMap.size()) tempOut.print(", ");
-            }
-        }tempOut.println("}");
+	public ARFFOutputWriter(String outFileName, List<ARFFOutputWriterBuffer> arffBuffers, MFeatureKeyMap mFeatureKeyMap) throws IOException {
+        this.outFile = new File(outFileName + MY_EXTENSION);
+        Files.createDirectories(Paths.get(outFile.getParent()));
+        this.mFeatureKeyMap = mFeatureKeyMap;
+        this.arffBuffers = arffBuffers;
 	}
 
 	public void close() throws IOException{
-		this.tempOut.close();
+		for(ARFFOutputWriterBuffer buff : this.arffBuffers) {
+            buff.close();
+        }
 
-		PrintStream out = new PrintStream(outFile);
-		this.printHeaders(out);
-		this.printData(out);
+        PrintStream out = new PrintStream(outFile);
+        this.printHeaders(out);
 		out.close();
-		
-		this.tempFile.delete();
 	}
 
 	/**
@@ -94,15 +47,16 @@ public class ARFFOutputWriter extends AbstractOutputWriter {
 		out.println();
 		
 		// Print class
-		Iterator<String> featureIterator = this.featureModel.featMap.keySet().iterator();
+		Iterator<String> featureIterator = mFeatureKeyMap.getKeySet().iterator();
 		String featureName = featureIterator.next();
 		out.print("@ATTRIBUTE " + featureName + " ");
 		out.print("{");{
-            int cnt = 1;
-            for (Double l : this.featureModel.labelSet) {
-                out.print(super.convertToString(l));
-                if ((cnt++) != this.featureModel.labelSet.size()) out.print(", ");
+            StringBuilder sb = new StringBuilder();
+            for (Double l : mFeatureKeyMap.getLabelSet()) {
+                sb.append(convertToString(l) + ",");
             }
+            String attribRowStr = sb.toString();
+            out.print(attribRowStr.substring(0, attribRowStr.length() - 1));
         }out.println("}");
 		
 		for(; featureIterator.hasNext();){
@@ -113,20 +67,14 @@ public class ARFFOutputWriter extends AbstractOutputWriter {
 		out.println("@DATA");
 		out.println();
 	}
-	
-	/**
-	 * Prints the body to the output stream
-	 * @param out is the out stream to print to
-	 * @throws IOException when unable to write/read
-	 */
-	private void printData(PrintStream out) throws IOException{
-		BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(tempFile)));
-		String line = null;
-		long cnt=0;
-		while((line = in.readLine()) != null){
-			super.showStatus(10000L);
-			out.println(line);
-		}
-		in.close();
-	}
+
+
+    /**
+     * Converts double feature value to string value to print. This could lead to precision loss depending on configuration.
+     * @param value is the of feature
+     * @return String equivalent of given feature value
+     */
+    protected String convertToString(Double value){
+        return String.format("%1.0f", value);
+    }
 }

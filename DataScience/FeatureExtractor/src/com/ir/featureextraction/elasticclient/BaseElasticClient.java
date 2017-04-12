@@ -8,6 +8,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -102,7 +103,10 @@ public class BaseElasticClient implements ElasticClient, Serializable{
 
         SearchHit[] hits = response.getHits().hits();
         for(SearchHit h:hits){
-            result  = h.getFields().get(fieldName).getValue();
+            SearchHitField field = h.getFields().get(fieldName);
+            if(field!=null)
+                result  = field.getValue();
+
         }
         return result;
     }

@@ -1,6 +1,7 @@
 package com.ir.featureextraction.controlers.extractors;
 
 import com.ir.featureextraction.elasticclient.ElasticClient;
+import com.ir.featureextraction.elasticclient.ElasticClientFactory;
 import com.ir.featureextraction.models.MFeatureValueRow;
 
 import java.net.UnknownHostException;
@@ -20,7 +21,7 @@ public class DateFeatureExtractor extends AbstractFeatureExtractor {
 	public DateFeatureExtractor(ElasticClient client, String fieldName, DateFormat dateFormat)
 			throws UnknownHostException {
 		super(client, fieldName);
-		this.dateFormat = dateFormat;
+		this.dateFormat = (DateFormat) dateFormat.clone();
 	}
 	
 
@@ -34,13 +35,17 @@ public class DateFeatureExtractor extends AbstractFeatureExtractor {
 			val = super.client.getValue(docID, super.textFieldName);
 			if(val != null) {
                 Date dateVal = df.parse((String) val);
-                featureName = this.dateFormat.format(dateVal);
-                featureName = super.getFeatName("_date_" + featureName);
-                result.put(featureName, 1.0);
+                try {
+                    featureName = this.dateFormat.format(dateVal);
+                    featureName = super.getFeatName("_date_" + featureName);
+                    result.put(featureName, 1.0);
+                }catch (ArrayIndexOutOfBoundsException e){
+                    e.printStackTrace();
+                    System.err.println("inner err:"+ docID + "\terr=" + e + "\tval="+val);
+
+                }
             }
-		}catch(Exception e){
-		    System.out.println(e);
-        }
+		}catch(Exception e){e.printStackTrace();}
 		return result;
 	}
 }

@@ -45,7 +45,7 @@ public class NGramFeatureExtractor extends AbstractFeatureExtractor {
 				result.put(super.getFeatName(e.getKey()),
 						super.tfSmoothing(e.getValue()));
 			}
-		}catch(Exception e){}
+		}catch(Exception e){e.printStackTrace();System.err.println("DocId:"+docID);}
 		return result;
 	}
 }

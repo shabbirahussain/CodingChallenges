@@ -32,7 +32,7 @@ public class IsTestFeatureExtractor extends AbstractFeatureExtractor {
 					result.put("#VALUE", 1.0);
                 }
             }
-		}catch(Exception e){}
+		}catch(Exception e){e.printStackTrace();}
 		return result;
 	}
 }

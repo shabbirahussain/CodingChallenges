@@ -93,6 +93,7 @@ public final class Executor {
         long start = System.nanoTime();
         System.out.print("Loading document list...");
         List<String> docList = client.getDocumentList();
+
         System.out.println("[Took = " + ((System.nanoTime() - start) * 1.0e-9) + "]");
 
 

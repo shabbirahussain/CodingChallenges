@@ -93,25 +93,7 @@ public final class Executor {
         long start = System.nanoTime();
         System.out.print("Loading document list...");
         List<String> docList = client.getDocumentList();
-
         System.out.println("[Took = " + ((System.nanoTime() - start) * 1.0e-9) + "]");
-
-
-        ////////// Create feature extractors //////////////////
-        List<FeatureExtractor> featureExtractors = new LinkedList<>();
-
-        featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("yyyy")));
-        featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("mm")));
-        featureExtractors.add(new NGramFeatureExtractor(client, "bodyText"));
-        featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Shingles"));
-        featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Skipgrams"));
-
-        ////////// Create label feature extractors //////////////////
-        FeatureExtractor labelExtractor = new ContainsTagFeatureExtractor(client, LABEL_FIELD_NAME, topic);
-
-        ////////// Create label feature extractors //////////////////
-        FeatureExtractor isTestExtractor = (new IsTestFeatureExtractor(client, IS_TEST_FIELD_NAME));
-
 
         ///////// Create output writers  /////////////////////
         String featFileName = Constants.FEAT_FILE_PATH + topic +  "/" + topic;
@@ -122,6 +104,21 @@ public final class Executor {
 
         List<List<String>> docLists = splitList(docList, Constants.NUM_THREADS);
         for(int i=0; i<Constants.NUM_THREADS; i++){
+            ////////// Create feature extractors //////////////////
+            List<FeatureExtractor> featureExtractors = new LinkedList<>();
+
+            featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("yyyy")));
+            featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("mm")));
+            featureExtractors.add(new NGramFeatureExtractor(client, "bodyText"));
+            featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Shingles"));
+            featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Skipgrams"));
+
+            ////////// Create label feature extractors //////////////////
+            FeatureExtractor labelExtractor = new ContainsTagFeatureExtractor(client, LABEL_FIELD_NAME, topic);
+
+            ////////// Create label feature extractors //////////////////
+            FeatureExtractor isTestExtractor = (new IsTestFeatureExtractor(client, IS_TEST_FIELD_NAME));
+
             ARFFOutputWriterBuffer bufTrain = new ARFFOutputWriterBuffer(i,"_train", Constants.TEMP_PATH, mFeatureKeyMap);
             ARFFOutputWriterBuffer bufTest  = new ARFFOutputWriterBuffer(i,"_test" , Constants.TEMP_PATH, mFeatureKeyMap);
 

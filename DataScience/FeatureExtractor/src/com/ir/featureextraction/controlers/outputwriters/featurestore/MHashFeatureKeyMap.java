@@ -1,4 +1,4 @@
-package com.ir.featureextraction.controlers.outputwriters;
+package com.ir.featureextraction.controlers.outputwriters.featurestore;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -10,7 +10,7 @@ import java.util.Set;
  * Internal model
  * @author shabbirhussain
  */
-public class MFeatureKeyMap implements Serializable {
+public class MHashFeatureKeyMap implements MFeatureKeyMap {
     private static final long serialVersionUID = 1L;
     private Map<String, Integer> featMap;
     private Set<Double> labelSet;
@@ -18,16 +18,12 @@ public class MFeatureKeyMap implements Serializable {
     /**
      * Default constructor
      */
-    public MFeatureKeyMap(){
-        this.featMap  = new LinkedHashMap<>();
+    public MHashFeatureKeyMap(){
+        this.featMap  = new LinkedHashMap<>(Integer.MAX_VALUE);
         this.labelSet = new HashSet<>();
     }
 
-    /**
-     * Gets the numeric equivalent of the given string feature name
-     * @param feature is the string feature to lookup
-     * @return a unique numeric index for unique features
-     */
+    @Override
     public Integer getNumericKey(String feature){
         Integer nKey = this.featMap.get(feature);
         if(nKey == null){
@@ -36,24 +32,17 @@ public class MFeatureKeyMap implements Serializable {
         return nKey;
     }
 
-    /**
-     * @return Gets the set of keys present in the feature
-     */
+    @Override
     public Set<String> getKeySet(){
         return this.featMap.keySet();
     }
 
-    /**
-     * @return Gets the set of keys present in the labels
-     */
+    @Override
     public Set<Double> getLabelSet(){
         return this.labelSet;
     }
 
-    /**
-     * Adds a label to the model
-     * @param label is the label to add to the model
-     */
+    @Override
     public void addLabel(Double label) {
         if(!this.labelSet.contains(label))
             this.addNewLabel(label);
@@ -73,8 +62,11 @@ public class MFeatureKeyMap implements Serializable {
      * @return a unique numeric index for unique features
      */
     private synchronized Integer addNumericKey(String feature){
-        Integer nKey = this.featMap.size();
-        this.featMap.put(feature, nKey);
+        Integer nKey = this.featMap.get(feature);
+        if(nKey == null){
+            nKey = this.featMap.size();
+            this.featMap.put(feature, nKey);
+        }
         return nKey;
     }
 }

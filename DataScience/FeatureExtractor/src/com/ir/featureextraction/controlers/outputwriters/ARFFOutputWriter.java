@@ -1,5 +1,7 @@
 package com.ir.featureextraction.controlers.outputwriters;
 
+import com.ir.featureextraction.controlers.outputwriters.featurestore.MFeatureKeyMap;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;

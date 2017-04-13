@@ -3,14 +3,12 @@ package com.ir.featureextraction;
 import java.io.*;
 import java.text.*;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import com.ir.featureextraction.controlers.extractors.*;
 import com.ir.featureextraction.controlers.outputwriters.ARFFOutputWriter;
 import com.ir.featureextraction.controlers.outputwriters.ARFFOutputWriterBuffer;
-import com.ir.featureextraction.controlers.outputwriters.MFeatureKeyMap;
-import com.ir.featureextraction.copyer.CopyUpdateLabel;
+import com.ir.featureextraction.controlers.outputwriters.featurestore.MFeatureKeyMap;
+import com.ir.featureextraction.controlers.outputwriters.featurestore.MHashValueFeatureKeyMap;
 import com.ir.featureextraction.elasticclient.ElasticClient;
 import com.ir.featureextraction.elasticclient.ElasticClientFactory;
 
@@ -100,7 +98,7 @@ public final class Executor {
         List<Thread> threads = new LinkedList<>();
         List<ARFFOutputWriterBuffer> allOutTest  = new LinkedList<>();
         List<ARFFOutputWriterBuffer> allOutTrain = new LinkedList<>();
-        MFeatureKeyMap mFeatureKeyMap = new MFeatureKeyMap();
+        MFeatureKeyMap mFeatureKeyMap = new MHashValueFeatureKeyMap();
 
         List<List<String>> docLists = splitList(docList, Constants.NUM_THREADS);
         for(int i=0; i<Constants.NUM_THREADS; i++){
@@ -162,7 +160,7 @@ public final class Executor {
      */
 	private static List<List<String>> splitList(List<String> stringList, int numParts){
 	    List<List<String>> result = new LinkedList<>();
-        double numElements = Math.round(stringList.size()/numParts);
+        double numElements = Math.ceil(stringList.size()/numParts);
 
         List<String> tempList = new LinkedList<>();
         int i = 0;
@@ -173,6 +171,9 @@ public final class Executor {
                 result.add(tempList);
                 tempList = new LinkedList<>();
             }
+        }
+        if(result.size()>numParts){
+            System.out.println("More lists than threads, joining");
         }
         return result;
     }

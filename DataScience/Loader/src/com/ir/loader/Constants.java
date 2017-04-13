@@ -1,11 +1,11 @@
 package com.ir.loader;
 
 public final class Constants {
-	private static final String BASE_PATH = "/Users/shabbirhussain/Data/DatascienceCahallange/";
+	private static final String BASE_PATH = "/Volumes/HDD/Data/DatascienceCahallange/";
 	private static final String DATASET_NAME = "ds_dataset";
 	
-	public  static final String DATA_FILE_PATH = BASE_PATH + "raw/TrainingData/";
-	public static final String  INDEX_NAME   = DATASET_NAME; 
+	public  static final String DATA_FILE_PATH = BASE_PATH + DATASET_NAME + "/raw/TrainingData/";
+	public static final String  INDEX_NAME   = DATASET_NAME;
 	public static final String  INDEX_TYPE   = "train";
 	
 	// Word assosiations

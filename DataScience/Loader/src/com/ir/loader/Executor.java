@@ -27,7 +27,7 @@ public final class Executor {
 		
 		try {
 			
-			System.out.println("\n\nLoading Data...");
+			System.out.println("\n\nLoading Data..." + DATA_FILE_PATH);
             long cnt = startLoad(DATA_FILE_PATH, elasticClient, parser);
 			
 			System.out.println("Num of records inserted=" + cnt);
@@ -49,7 +49,7 @@ public final class Executor {
 
         long cnt = 0;
         for (File file : listOfFiles) {
-            if(!file.getName().endsWith(".json")) continue;
+            if(file.getName().startsWith(".") || !file.getName().endsWith(".json")) continue;
             System.out.print("[Info]: Loading file [" + file.getName() + "]");
 
             Map<String, XContentBuilder> docs = parser.parseFile(file.toPath());

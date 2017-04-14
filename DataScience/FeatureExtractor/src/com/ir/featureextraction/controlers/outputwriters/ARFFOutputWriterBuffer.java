@@ -81,7 +81,7 @@ public class ARFFOutputWriterBuffer{
             sb.append(e.getKey() + " " + convertToString(e.getValue()) + ",");
         }
         String featRowStr = sb.toString();
-        this.datOut.print(featRowStr.substring(0, featRowStr.length() - 1) + "}"); //","
+        this.datOut.println(featRowStr.substring(0, featRowStr.length() - 1) + "}"); //","
     }
 
 

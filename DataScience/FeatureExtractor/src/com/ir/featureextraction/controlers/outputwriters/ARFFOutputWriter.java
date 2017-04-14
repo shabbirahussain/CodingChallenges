@@ -38,6 +38,7 @@ public class ARFFOutputWriter {
 
         PrintStream out = new PrintStream(outFile);
         this.printHeaders(out);
+        this.printData(out);
 		out.close();
 	}
 
@@ -86,9 +87,9 @@ public class ARFFOutputWriter {
             finalDatFile.transferFrom(inShard, finalDatFile.size(), inShard.size());
 
             inShard = arffBuffer.getIdxReadChannel();
-            finalIdxFile.transferFrom(inShard, finalDatFile.size(), inShard.size());
+            finalIdxFile.transferFrom(inShard, finalIdxFile.size(), inShard.size());
 
-            arffBuffer.cleanUp();
+            //arffBuffer.cleanUp();
         }
     }
 

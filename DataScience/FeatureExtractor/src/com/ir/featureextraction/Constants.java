@@ -1,7 +1,7 @@
 package com.ir.featureextraction;
 
 public final class Constants{
-	private static final String BASE_PATH = "/Volumes/HDD/Data/DatascienceCahallange/";//"/Volumes/Shabbir's D/Data/DatascienceCahallange/";
+	private static final String BASE_PATH = "/Users/shabbirhussain/Data/DatascienceCahallange/";//"/Volumes/Shabbir's D/Data/DatascienceCahallange/";
 	private static final String DATASET_NAME = "ds_dataset";
 	
 	public static final String  INDEX_NAME   = "ds_dataset";
@@ -18,5 +18,4 @@ public final class Constants{
 	public static final String  CLUSTER_NAME = "dead-pool";
 
 	public static final Integer NUM_THREADS = 5;
- 	public static final String[] MANUAL_FEAT_LIST = {};
 }

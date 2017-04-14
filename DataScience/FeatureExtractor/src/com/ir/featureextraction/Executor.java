@@ -8,6 +8,7 @@ import com.ir.featureextraction.controlers.extractors.*;
 import com.ir.featureextraction.controlers.outputwriters.ARFFOutputWriter;
 import com.ir.featureextraction.controlers.outputwriters.ARFFOutputWriterBuffer;
 import com.ir.featureextraction.controlers.outputwriters.featurestore.MFeatureKeyMap;
+import com.ir.featureextraction.controlers.outputwriters.featurestore.MHashFeatureKeyMap;
 import com.ir.featureextraction.controlers.outputwriters.featurestore.MHashValueFeatureKeyMap;
 import com.ir.featureextraction.elasticclient.ElasticClient;
 import com.ir.featureextraction.elasticclient.ElasticClientFactory;
@@ -85,7 +86,7 @@ public final class Executor {
 	 */
 	public static void main(String[] args) throws Exception{
         ElasticClient client = ElasticClientFactory.getElasticClient();
-        String topic = "afganistan";
+        String topic = "aid";
 
 
         long start = System.nanoTime();
@@ -98,7 +99,7 @@ public final class Executor {
         List<Thread> threads = new LinkedList<>();
         List<ARFFOutputWriterBuffer> allOutTest  = new LinkedList<>();
         List<ARFFOutputWriterBuffer> allOutTrain = new LinkedList<>();
-        MFeatureKeyMap mFeatureKeyMap = new MHashValueFeatureKeyMap();
+        MFeatureKeyMap mFeatureKeyMap = new MHashFeatureKeyMap();
 
         List<List<String>> docLists = splitList(docList, Constants.NUM_THREADS);
         for(int i=0; i<Constants.NUM_THREADS; i++){

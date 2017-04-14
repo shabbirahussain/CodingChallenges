@@ -2,9 +2,8 @@ package com.ir.featureextraction.controlers.outputwriters;
 
 import com.ir.featureextraction.controlers.outputwriters.featurestore.MFeatureKeyMap;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -13,7 +12,7 @@ import java.util.List;
 public class ARFFOutputWriter {
 	private static final String MY_EXTENSION = ".arff";
     private MFeatureKeyMap mFeatureKeyMap;
-	private File outFile;
+	private File outFile, idxFile;
 	private List<ARFFOutputWriterBuffer> arffBuffers;
 
 	
@@ -25,6 +24,8 @@ public class ARFFOutputWriter {
 	 */
 	public ARFFOutputWriter(String outFileName, List<ARFFOutputWriterBuffer> arffBuffers, MFeatureKeyMap mFeatureKeyMap) throws IOException {
         this.outFile = new File(outFileName + MY_EXTENSION);
+        this.idxFile = new File(outFileName + "_docs.txt");
+
         Files.createDirectories(Paths.get(outFile.getParent()));
         this.mFeatureKeyMap = mFeatureKeyMap;
         this.arffBuffers = arffBuffers;
@@ -69,6 +70,27 @@ public class ARFFOutputWriter {
 		out.println("@DATA");
 		out.println();
 	}
+
+    /**
+     * Concatenates data into one file
+     * @param out
+     * @throws IOException
+     */
+	private void printData(PrintStream out) throws IOException {
+        FileChannel finalDatFile = new FileOutputStream(this.outFile, true).getChannel();
+        FileChannel finalIdxFile = new FileOutputStream(this.idxFile, false).getChannel();
+
+        FileChannel inShard;
+        for(ARFFOutputWriterBuffer arffBuffer: this.arffBuffers){
+            inShard = arffBuffer.getDataReadChannel();
+            finalDatFile.transferFrom(inShard, finalDatFile.size(), inShard.size());
+
+            inShard = arffBuffer.getIdxReadChannel();
+            finalIdxFile.transferFrom(inShard, finalDatFile.size(), inShard.size());
+
+            arffBuffer.cleanUp();
+        }
+    }
 
 
     /**

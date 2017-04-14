@@ -3,6 +3,7 @@ package com.ir.featureextraction.controlers.outputwriters;
 import com.ir.featureextraction.controlers.outputwriters.featurestore.MFeatureKeyMap;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,9 +15,8 @@ public class ARFFOutputWriterBuffer{
 	private static final String MY_EXTENSION = ".arff";
 
     private MFeatureKeyMap mFeatureKeyMap;
-    private File idxFile, datFile, tempDir;
+    private File idxFile, datFile;
     private PrintStream datOut, idxOut;
-    private BufferedReader datIn, idxIn;
     private Integer labelIndex;
 
 
@@ -27,11 +27,11 @@ public class ARFFOutputWriterBuffer{
 	 * @throws IOException
 	 */
 	public ARFFOutputWriterBuffer(int threadId, String outFile, String tempPath, MFeatureKeyMap mFeatureKeyMap) throws IOException {
-        Path dir = Paths.get(tempPath + "/" + threadId + "/" + outFile + "/");
+        Path dir = Paths.get(tempPath + "/" + threadId + "/");
         Files.createDirectories(dir);
 
-        this.datFile = new File(dir.toFile(), "dataFile.txt");
-        this.idxFile = new File(dir.toFile(), "idxFile.txt");
+        this.datFile = new File(dir.toFile(), outFile + "_dataFile.txt");
+        this.idxFile = new File(dir.toFile(), outFile + "_idxFile.txt");
 
         this.datOut = new PrintStream(datFile);
         this.idxOut = new PrintStream(idxFile);
@@ -85,16 +85,29 @@ public class ARFFOutputWriterBuffer{
     }
 
 
+
     /**
      * Prepares the buffer to read from it
      * @throws FileNotFoundException
      */
-    public void prepareRead() throws FileNotFoundException {
-        this.datOut.close();
-        this.idxOut.close();
+    public FileChannel getDataReadChannel() throws FileNotFoundException {
+        return new FileInputStream(this.datFile).getChannel();
+    }
 
-        this.idxIn = new BufferedReader(new InputStreamReader(new FileInputStream(this.idxFile)));
-        this.datIn = new BufferedReader(new InputStreamReader(new FileInputStream(this.datFile)));
+    /**
+     * Prepares the buffer to read from it
+     * @throws FileNotFoundException
+     */
+    public FileChannel getIdxReadChannel() throws FileNotFoundException {
+        return new FileInputStream(this.idxFile).getChannel();
+    }
+
+    /**
+     * Cleans up all the data files in the
+     */
+    public void cleanUp(){
+        this.idxFile.delete();
+        this.datFile.delete();
     }
 
     /**

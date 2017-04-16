@@ -1,5 +1,6 @@
 package com.ir.featureextraction.controlers.outputwriters.featurestore;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -44,11 +45,14 @@ public class MHashValueFeatureKeyMap implements MFeatureKeyMap {
         if(!this.labelSet.contains(label))
             this.addNewLabel(label);
     }
+    @Override
+    public void loadFromARFF(String filePath) throws IOException {
+    }
 
-    /**
-     * Adds a new label to the set
-     * @param label is the label to add to the model
-     */
+        /**
+         * Adds a new label to the set
+         * @param label is the label to add to the model
+         */
     private synchronized void addNewLabel(Double label){
         this.labelSet.add(label);
     }

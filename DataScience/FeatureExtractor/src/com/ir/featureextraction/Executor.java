@@ -86,12 +86,12 @@ public final class Executor {
 	 */
 	public static void main(String[] args) throws Exception{
         ElasticClient client = ElasticClientFactory.getElasticClient();
-        String topic = "aid";
+        String topic = "activism";
 
 
         long start = System.nanoTime();
         System.out.print("Loading document list...");
-        List<String> docList = client.getDocumentList();
+        List<String> docList = client.getTestDocumentList();//getDocumentList();
         System.out.println("[Took = " + ((System.nanoTime() - start) * 1.0e-9) + "]");
 
         ///////// Create output writers  /////////////////////
@@ -100,6 +100,7 @@ public final class Executor {
         List<ARFFOutputWriterBuffer> allOutTest  = new LinkedList<>();
         List<ARFFOutputWriterBuffer> allOutTrain = new LinkedList<>();
         MFeatureKeyMap mFeatureKeyMap = new MHashFeatureKeyMap();
+        //mFeatureKeyMap.loadFromARFF("/Users/hshabbir/Documents/openWorkspace/Data/DatascienceChallenge/ds_dataset/results/features/aid/aid_test.arff");
 
         List<List<String>> docLists = splitList(docList, Constants.NUM_THREADS);
         for(int i=0; i<Constants.NUM_THREADS; i++){
@@ -161,7 +162,7 @@ public final class Executor {
      */
 	private static List<List<String>> splitList(List<String> stringList, int numParts){
 	    List<List<String>> result = new LinkedList<>();
-        double numElements = Math.ceil(stringList.size()/numParts);
+        double numElements = Math.ceil(stringList.size()/numParts)+1;
 
         List<String> tempList = new LinkedList<>();
         int i = 0;
@@ -196,19 +197,5 @@ public final class Executor {
         }
         br.close();
         return result;
-    }
-
-    /**
-     * Writes the list of documents to a file
-     * @param docs is the list of documents to write
-     * @param filePath is the full string path of document file to write
-     * @throws FileNotFoundException
-     */
-    private static void writeDocumentList(Collection<String> docs, String filePath) throws FileNotFoundException {
-	    PrintStream out = new PrintStream(new FileOutputStream(filePath));
-	    for(String doc:docs){
-	        out.println(doc);
-        }
-	    out.close();
     }
 }

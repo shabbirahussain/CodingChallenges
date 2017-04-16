@@ -1,6 +1,6 @@
 package com.ir.featureextraction.controlers.outputwriters.featurestore;
 
-import java.io.Serializable;
+import java.io.*;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -46,6 +46,20 @@ public class MHashFeatureKeyMap implements MFeatureKeyMap {
     public void addLabel(Double label) {
         if(!this.labelSet.contains(label))
             this.addNewLabel(label);
+    }
+
+    @Override
+    public void loadFromARFF(String filePath) throws IOException{
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
+        String line;
+        while((line=br.readLine())!=null){
+            if(line.startsWith("@ATTRIBUTE")){
+                String[] tokens = line.split(" ");
+                addNumericKey(tokens[1]);
+            }
+            if(line.startsWith("@DATA")) break;
+        }
+        addLabel(1.0);addLabel(0.0);
     }
 
     /**

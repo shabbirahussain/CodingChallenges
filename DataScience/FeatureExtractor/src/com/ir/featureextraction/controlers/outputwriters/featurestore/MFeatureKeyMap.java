@@ -1,9 +1,7 @@
 package com.ir.featureextraction.controlers.outputwriters.featurestore;
 
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,4 +29,11 @@ public interface MFeatureKeyMap extends Serializable {
      * @param label is the label to add to the model
      */
     public void addLabel(Double label);
+
+    /**
+     * Loads feature map from existing ARFF file
+     * @param filePath is the full file path of the ARFF file to load
+     * @throws IOException when file exception occurs
+     */
+    public void loadFromARFF(String filePath) throws IOException;
 }

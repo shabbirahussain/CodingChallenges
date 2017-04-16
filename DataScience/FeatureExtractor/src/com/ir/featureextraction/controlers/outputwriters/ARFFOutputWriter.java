@@ -89,7 +89,7 @@ public class ARFFOutputWriter {
             inShard = arffBuffer.getIdxReadChannel();
             finalIdxFile.transferFrom(inShard, finalIdxFile.size(), inShard.size());
 
-            //arffBuffer.cleanUp();
+            arffBuffer.cleanUp();
         }
     }
 

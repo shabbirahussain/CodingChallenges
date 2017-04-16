@@ -51,4 +51,10 @@ public interface ElasticClient {
      * @return List of string containing document ids from elasticsearch
      */
     List<String> getDocumentList();
+
+	/**
+	 * Gets the document list of test documents from elastic search
+	 * @return List of string containing document ids from elasticsearch
+	 */
+	List<String> getTestDocumentList();
 }

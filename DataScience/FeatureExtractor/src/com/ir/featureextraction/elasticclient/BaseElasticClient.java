@@ -147,4 +147,40 @@ public class BaseElasticClient implements ElasticClient, Serializable{
         }
         return result;
     }
+
+	/**
+	 * Gets the document list from elastic search
+	 * @return List of string containing document ids from elasticsearch
+	 */
+	public List<String> getTestDocumentList(){
+		List<String> result = new LinkedList<>();
+
+		TimeValue scrollTimeValue = new TimeValue(60000);
+		SearchResponse response = _client.prepareSearch()
+				.setIndices(this.indices)
+				.setTypes(this.types)
+				.setSize(10000)
+				.setScroll(scrollTimeValue)
+				.setQuery(QueryBuilders.termQuery("isTest", true))
+				.get();
+
+		while(true){
+			if((response.status() != RestStatus.OK)
+					|| (response.getHits().getHits().length == 0))
+				break;
+
+			SearchHit hit[]=response.getHits().hits();
+			for(SearchHit h:hit){
+				String id = h.getId();
+				result.add(id);
+			}
+
+			// fetch next window
+			response = _client.prepareSearchScroll(response.getScrollId())
+					.setScroll(scrollTimeValue)
+					.get();
+			//break;
+		}
+		return result;
+	}
 }

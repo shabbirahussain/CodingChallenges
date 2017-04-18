@@ -1,5 +1,37 @@
-/Users/shabbirhussain/Data/IRData/trec07_spam/results/
+cd /Users/shabbirhussain/Data/DatascienceCahallange/ds_dataset/results/features/aid
 
+java -cp /Users/shabbirhussain/Apps/WekaStack/Weka/weka-3-9-1/weka.jar -Xmx20g \
+weka.classifiers.bayes.NaiveBayesUpdateable  \
+-t "aid_train.arff" \
+-d "NaiveBayesUpdateable.featuresManual.model" \
+-c first \
+-split-percentage 80
+
+java -cp /Users/shabbirhussain/Apps/WekaStack/Weka/weka-3-9-1/weka.jar -Xmx8g \
+weka.filters.supervised.attribute.AttributeSelection \
+-c 1 -b \
+-E "weka.attributeSelection.PrincipalComponents -R 0.95 -A -1 -M -1" \
+-S "weka.attributeSelection.Ranker -T -1.7976931348623157E308 -N -1" \
+-i "aid_train.arff" -o "aid_train_pca.arff" \
+-r "test.arff"      -s "test_pca.arff" 
+
+java -Xmx8g \
+weka.filters.supervised.attribute.AttributeSelection \
+-b \
+-i "aid_train.arff" -o "aid_train_pca.arff" \
+-r "test.arff" -s "test_pca.arff" \
+-c first \
+-E "weka.attributeSelection.PrincipalComponents -R 0.95 -A -1" \
+-S "weka.attributeSelection.Ranker -T -1.7976931348623157E308 -N -1" 
+
+
+==================================
+download https://svn.cms.waikato.ac.nz/svn/weka/branches/stable-3-8/weka/lib/
+mtj.jar
+arpack_combined_all.jar
+core.jar
+
+==================================
 
 cd /Users/shabbirhussain/Data/IRData/trec07_spam/results/ 
 java -classpath /Volumes/weka-3-6-14/weka-3-6-14/weka.jar \
@@ -20,14 +52,31 @@ weka.classifiers.functions.LinearRegression  \
 -c first \
 -split-percentage 80
 
-cd /Users/shabbirhussain/Data/DatascienceCahallange/ds_dataset/results/features/aid
 
-java -cp /Users/shabbirhussain/Apps/WekaStack/Weka/weka-3-9-1/weka.jar -Xmx20g \
-weka.classifiers.bayes.NaiveBayesUpdateable  \
--t "aid_train.arff" \
--d "NaiveBayesUpdateable.featuresManual.model" \
--c first \
--split-percentage 80
+
+
+weka.filters.supervised.attribute.AttributeSelection \
+  -b -i train.arff -o train_pca.arff \
+  -r test.arff -s test_pca_output.arff \
+  -E "weka.attributeSelection.PrincipalComponents -R 0.95 -A 5" \
+  -S "weka.attributeSelection.Ranker -T -1.7976931348623157E308 -N -1" 
+
+
+
+java -cp /Users/shabbirhussain/Apps/WekaStack/Weka/weka-3-9-1/weka.jar -Xmx8g \
+weka.filters.supervised.attribute.AttributeSelection \
+-E "weka.attributeSelection.CfsSubsetEval " \
+-S "weka.attributeSelection.BestFirst -D 1 -N 5" \
+-b \
+-i "aid_train.arff" \
+-o "aid_train_pca.arff" \
+-r "test.arff" \
+-s "test_pca.arff"
+
+
+
+
+
 
 java -Xmx7g -classpath /Volumes/weka-3-8-0/weka-3-8-0/weka.jar \
 weka.classifiers.bayes.NaiveBayesUpdateable  \

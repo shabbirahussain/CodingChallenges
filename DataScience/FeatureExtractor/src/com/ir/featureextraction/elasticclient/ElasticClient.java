@@ -1,6 +1,8 @@
 package com.ir.featureextraction.elasticclient;
 
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.SearchHitField;
 
 import java.io.IOException;
 import java.util.List;
@@ -50,11 +52,19 @@ public interface ElasticClient {
      * Gets the document list from elastic search
      * @return List of string containing document ids from elasticsearch
      */
-    List<String> getDocumentList();
+    List<String> getAllDocumentList();
 
 	/**
 	 * Gets the document list of test documents from elastic search
 	 * @return List of string containing document ids from elasticsearch
 	 */
-	List<String> getTestDocumentList();
+	List<String> getTestDocumentList(QueryBuilder queryBuilder);
+
+    /**
+     * Gets field values foe given list of fields
+     * @param docNo is the document number to search for
+     * @param fieldNames is the list of fields to retrieve the value
+     * @return A map of name and field value of the fields
+     */
+	Map<String, SearchHitField> getValue(String docNo, List<String> fieldNames);
 }

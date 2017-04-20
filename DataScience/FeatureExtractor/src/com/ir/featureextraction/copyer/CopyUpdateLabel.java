@@ -38,7 +38,7 @@ public final class CopyUpdateLabel implements Runnable{
         List<CopyUpdateLabel> labelExtractors   = new LinkedList<>();
         Collection<String> topics = getTopics(Constants.TOPIC_DICT_PATH);
 
-       ////////// Create label feature extractors //////////////////
+        ////////// Create label feature extractors //////////////////
         for(String topic : topics) {
             FeatureExtractor labelExtractor = new ContainsTagFeatureExtractor(client, LABEL_FIELD_NAME, topic);
 

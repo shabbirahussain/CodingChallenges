@@ -9,7 +9,6 @@ import com.ir.featureextraction.controlers.outputwriters.ARFFOutputWriter;
 import com.ir.featureextraction.controlers.outputwriters.ARFFOutputWriterBuffer;
 import com.ir.featureextraction.controlers.outputwriters.featurestore.MFeatureKeyMap;
 import com.ir.featureextraction.controlers.outputwriters.featurestore.MHashFeatureKeyMap;
-import com.ir.featureextraction.controlers.outputwriters.featurestore.MHashValueFeatureKeyMap;
 import com.ir.featureextraction.elasticclient.ElasticClient;
 import com.ir.featureextraction.elasticclient.ElasticClientFactory;
 
@@ -86,12 +85,12 @@ public final class Executor {
 	 */
 	public static void main(String[] args) throws Exception{
         ElasticClient client = ElasticClientFactory.getElasticClient();
-        String topic = "activism";
+        String topic = "germany";
 
 
         long start = System.nanoTime();
         System.out.print("Loading document list...");
-        List<String> docList = client.getTestDocumentList();//getDocumentList();
+        List<String> docList = client.getAllDocumentList();//getTestDocumentList();
         System.out.println("[Took = " + ((System.nanoTime() - start) * 1.0e-9) + "]");
 
         ///////// Create output writers  /////////////////////
@@ -110,8 +109,8 @@ public final class Executor {
             featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("yyyy")));
             featureExtractors.add(new DateFeatureExtractor(client, "webPublicationDate", new SimpleDateFormat("mm")));
             featureExtractors.add(new NGramFeatureExtractor(client, "bodyText"));
-            featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Shingles"));
-            featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Skipgrams"));
+            //featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Shingles"));
+            //featureExtractors.add(new NGramFeatureExtractor(client, "bodyText.Skipgrams"));
 
             ////////// Create label feature extractors //////////////////
             FeatureExtractor labelExtractor = new ContainsTagFeatureExtractor(client, LABEL_FIELD_NAME, topic);

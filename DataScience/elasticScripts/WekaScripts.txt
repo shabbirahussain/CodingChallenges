@@ -3,9 +3,35 @@ cd /Users/shabbirhussain/Data/DatascienceCahallange/ds_dataset/results/features/
 java -cp /Users/shabbirhussain/Apps/WekaStack/Weka/weka-3-9-1/weka.jar -Xmx20g \
 weka.classifiers.bayes.NaiveBayesUpdateable  \
 -t "aid_train.arff" \
--d "NaiveBayesUpdateable.featuresManual.model" \
+-d "NaiveBayesUpdateable.aid.model" \
 -c first \
 -split-percentage 80
+
+java -Xmx20g \
+weka.classifiers.bayes.NaiveBayesUpdateable  \
+-t "temp.arff" \
+-d "NaiveBayesUpdateable.aid.model" \
+-c first \
+-split-percentage 80
+
+java -Xmx20g \
+weka.classifiers.bayes.NaiveBayesUpdateable  \
+-t "germany_train.arff" \
+-d "NaiveBayesUpdateable.aid.model" \
+-c first \
+-split-percentage 80
+
+All Features
+feat = 61,405,396
+tota = 63,005,864
+data =  1,600,468
+
+Unigrams
+feat = 1,618,247
+tota = 3,218,712
+data = 1,600,465
+
+
 
 java -cp /Users/shabbirhussain/Apps/WekaStack/Weka/weka-3-9-1/weka.jar -Xmx8g \
 weka.filters.supervised.attribute.AttributeSelection \
@@ -15,7 +41,8 @@ weka.filters.supervised.attribute.AttributeSelection \
 -i "aid_train.arff" -o "aid_train_pca.arff" \
 -r "test.arff"      -s "test_pca.arff" 
 
-java -Xmx8g \
+date
+java -Xmx25g \
 weka.filters.supervised.attribute.AttributeSelection \
 -b \
 -i "aid_train.arff" -o "aid_train_pca.arff" \

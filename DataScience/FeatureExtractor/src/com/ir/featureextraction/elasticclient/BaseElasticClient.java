@@ -1,10 +1,12 @@
 package com.ir.featureextraction.elasticclient;
 
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.termvectors.TermVectorsRequest;
 import org.elasticsearch.action.termvectors.TermVectorsResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
@@ -21,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 
 public class BaseElasticClient implements ElasticClient, Serializable{
     private static final long serialVersionUID = 1L;
+    private static final TimeValue SCROLL_TIME_VALUE = new TimeValue(60000);
 
     protected static Client _client = null;
 	public String indices;
@@ -92,39 +95,48 @@ public class BaseElasticClient implements ElasticClient, Serializable{
 	@Override
     public Object getValue(String docNo, String fieldName){
         Object result = null;
+        List<String> fieldNames = new LinkedList<>();
+        fieldNames.add(fieldName);
 
-        SearchResponse response = _client.prepareSearch()
+        return this.getValue(docNo, fieldNames).get(fieldName);
+    }
+
+    @Override
+    public Map<String, SearchHitField> getValue(String docNo, List<String> fieldNames){
+        SearchRequestBuilder searchRequestBuilder = _client.prepareSearch()
                 .setIndices(this.indices)
                 .setTypes(this.types)
-                .addStoredField(fieldName)
                 .setQuery(QueryBuilders.idsQuery(this.types)
-                        .addIds(docNo))
-                .get();
+                        .addIds(docNo));
 
+        for(String fieldName: fieldNames)
+            searchRequestBuilder.addStoredField(fieldName);
+
+        SearchResponse response = searchRequestBuilder.get();
         SearchHit[] hits = response.getHits().hits();
         for(SearchHit h:hits){
-            SearchHitField field = h.getFields().get(fieldName);
-            if(field!=null)
-                result  = field.getValue();
-
+            return h.getFields();
         }
-        return result;
+        return null;
     }
+
+
+
+
 
 
     /**
      * Gets the document list from elastic search
      * @return List of string containing document ids from elasticsearch
      */
-    public List<String> getDocumentList(){
+    public List<String> getAllDocumentList(){
         List<String> result = new LinkedList<>();
 
-        TimeValue scrollTimeValue = new TimeValue(60000);
         SearchResponse response = _client.prepareSearch()
                 .setIndices(this.indices)
                 .setTypes(this.types)
                 .setSize(10000)
-                .setScroll(scrollTimeValue)
+                .setScroll(SCROLL_TIME_VALUE)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .get();
 
@@ -141,7 +153,7 @@ public class BaseElasticClient implements ElasticClient, Serializable{
 
             // fetch next window
             response = _client.prepareSearchScroll(response.getScrollId())
-                    .setScroll(scrollTimeValue)
+                    .setScroll(SCROLL_TIME_VALUE)
                     .get();
             //break;
         }
@@ -149,19 +161,21 @@ public class BaseElasticClient implements ElasticClient, Serializable{
     }
 
 	/**
-	 * Gets the document list from elastic search
+	 * Gets the test document list from elastic search
+     * eg: QueryBuilders.termQuery("isTest", true)
+     * @param queryBuilder is the qury defining the test set
 	 * @return List of string containing document ids from elasticsearch
 	 */
-	public List<String> getTestDocumentList(){
+	public List<String> getTestDocumentList(QueryBuilder queryBuilder){
 		List<String> result = new LinkedList<>();
 
-		TimeValue scrollTimeValue = new TimeValue(60000);
+
 		SearchResponse response = _client.prepareSearch()
 				.setIndices(this.indices)
 				.setTypes(this.types)
 				.setSize(10000)
-				.setScroll(scrollTimeValue)
-				.setQuery(QueryBuilders.termQuery("isTest", true))
+				.setScroll(SCROLL_TIME_VALUE)
+				.setQuery(queryBuilder)
 				.get();
 
 		while(true){
@@ -177,10 +191,12 @@ public class BaseElasticClient implements ElasticClient, Serializable{
 
 			// fetch next window
 			response = _client.prepareSearchScroll(response.getScrollId())
-					.setScroll(scrollTimeValue)
+					.setScroll(SCROLL_TIME_VALUE)
 					.get();
 			//break;
 		}
 		return result;
 	}
+
+
 }
